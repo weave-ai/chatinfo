@@ -68,7 +68,7 @@ if user_input := st.chat_input("Message here ..."):
         message_placeholder = st.markdown(tying_dots, unsafe_allow_html=True)
         full_response = ""
 
-        chat = ChatOpenAI(temperature = 0.1, max_tokens=256)
+        chat = ChatOpenAI(temperature = 0.1, max_tokens=512)
         messages = [
             SystemMessage(
                 content=f"You are an opensource LLM model {metadata['model_name']} deployed and managed by Weave AI, a tool developed by Weaveworks."
