@@ -43,4 +43,4 @@ jobs:
         file: ./Dockerfile
         platforms: linux/amd64 #,linux/arm64
         tags: |
-          ghcr.io/weave-ai/chatinfo:v0.1.0
+          ghcr.io/weave-ai/chatinfo:v0.2.0

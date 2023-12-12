@@ -3,6 +3,7 @@ import random
 import time
 import os
 import base64
+import json
 import requests
 import time
 from langchain.prompts import PromptTemplate
@@ -26,10 +27,18 @@ metadata = get_metadata()
 html_content = f"""
     <div style="display: flex; align-items: center;">
         <img src="https://avatars.githubusercontent.com/u/9976052?s=50&v=4">
-        <h2 style="margin: 0 0 0 10px;">Weave AI Chat ({metadata["model_name"]})</h2>
+        <h3 style="margin: 0 0 0 10px;">Weave AI Chat ({metadata["model_name"]})</h3>
     </div>
 """
 st.markdown(html_content, unsafe_allow_html=True)
+st.markdown(f"""
+```
+model_level:  {metadata['model_level']}
+family:       {metadata['family']}
+format:       {metadata['format']}
+quantization: {metadata['quantization']}
+```    
+""")
 
 with open('typing.css') as f:
     css = f.read()
@@ -61,25 +70,28 @@ if user_input := st.chat_input("Message here ..."):
 
     # Display assistant response in chat message container
     with st.chat_message("assistant"):
-        # message_placeholder = st.markdown(
-        #    f'<img src="data:image/gif;base64,{data_url}" width="32" height="32" style="vertical-align: super;" alt="gif">',
-        #    unsafe_allow_html=True,
-        # )
         message_placeholder = st.markdown(tying_dots, unsafe_allow_html=True)
         full_response = ""
 
-        chat = ChatOpenAI(temperature = 0.1, max_tokens=512)
-        messages = [
-            SystemMessage(
-                content=f"You are an opensource LLM model {metadata['model_name']} deployed and managed by Weave AI, a tool developed by Weaveworks."
-            ),
-            HumanMessage(
-                content=user_input
-            ),
-        ]
         start_time = time.time()
-        result = chat(messages)
-        assistant_response = result.content    
+        if metadata["model_level"] == "chat":
+            chat = ChatOpenAI(temperature = 0.1, max_tokens=512)
+            messages = [
+                SystemMessage(
+                    content=f"You are an opensource LLM model {metadata['model_name']} deployed and managed by Weave AI, a tool developed by Weaveworks."
+                ),
+                HumanMessage(
+                    content=user_input
+                ),
+            ]
+            result = chat(messages).content
+        elif metadata["model_level"] == "instruct":
+            pt = PromptTemplate.from_template(metadata["prompt_template"])
+            llm = OpenAI(temperature=0.1, max_tokens=512)
+            stop_words=json.loads(base64.b64decode(metadata["stop_words"]).decode('utf-8'))
+            result = llm(prompt=pt.format(prompt=user_input), stop=stop_words)
+
+        assistant_response = result
         end_time = time.time()
         duration = end_time - start_time
         formatted_duration = f"{int(duration)}s.{int((duration % 1) * 1000)}ms"        
